@@ -46,7 +46,7 @@ test('[ Negative ] Mqtt subscribe retain after disconnect', done => {
     var msg = { a: "b" }
     console.log('================================|| ')
     MqttClient.connect({
-        uri: 'wss://test.mosquitto.org:8081/'
+        uri: 'wss://test.mosquitto.org:8081/',
         webSocket: webSocket
     }, () => {
         MqttClient.subscribe('Test', '/react-native/test', (topic, data) => {
