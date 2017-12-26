@@ -19,10 +19,17 @@ export const my_connect = jest.fn().mockImplementation(options => {
 })
 
 export const my_client = Object.create(null)
-const clientConnected = jest.fn()
+const _clientConnected = jest.fn()
   .mockImplementation(() => isClientConnected)
+Object.defineProperty(my_client, '_client', {
+  value: {
+    get clientConnected () {
+      return isClientConnected
+    }
+  }
+})
 Object.defineProperty(my_client, 'connected', {
-  get: clientConnected
+  get: _clientConnected
 })
 
 export const my_disconnect = jest.fn().mockImplementation(options => {

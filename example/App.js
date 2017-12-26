@@ -86,7 +86,9 @@ class App extends PureComponent {
 
   componentWillMount() {
     MqttEssential.connect({
-      uri: 'wss://test.mosquitto.org:8081/'
+      uri: 'wss://lbs.eyezon.in:9901/',
+      username: 'testdevice',
+      password: 'testdeviceisonlyfortesting123'
     }, () => {
       ToastAndroid && ToastAndroid.show('Connected to mqtt server', ToastAndroid.SHORT)
     })

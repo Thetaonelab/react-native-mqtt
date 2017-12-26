@@ -9,7 +9,7 @@
 	"dependencies": {
 		"react": "16.0.0-alpha.12",
 		"react-native": "0.47.1",
-		"@eyezon/react-native-mqtt": "0.0.1",
+		"react-native-mqtt": "git+ssh://git@codelab.eyezon.in:experimental/react-native-mqtt.git",
 		"react-native-paho-mqtt": "^0.1.1"
 	},
 	"devDependencies": {

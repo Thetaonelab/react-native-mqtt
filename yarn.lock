@@ -3648,6 +3648,10 @@ react-native-paho-mqtt@^0.1.1:
   dependencies:
     events "^1.1.1"
 
+react-native-storage@^0.1.2:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/react-native-storage/-/react-native-storage-0.1.5.tgz#91d77560e41cc9e62d587b55a21b3d6ebaba5599"
+
 react-native@0.42.0:
   version "0.42.0"
   resolved "https://registry.yarnpkg.com/react-native/-/react-native-0.42.0.tgz#59b501603a63232598fff653a36307a26010402e"
@@ -3760,6 +3764,12 @@ react@15.4.1:
     fbjs "^0.8.4"
     loose-envify "^1.1.0"
     object-assign "^4.1.0"
+
+react_native_mqtt@^1.1.9:
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/react_native_mqtt/-/react_native_mqtt-1.1.9.tgz#89f7d97ecca460201a06712ec148bdd725880efd"
+  dependencies:
+    react-native-storage "^0.1.2"
 
 read-pkg-up@^1.0.1:
   version "1.0.1"

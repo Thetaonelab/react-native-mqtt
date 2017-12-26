@@ -1,55 +1,111 @@
 # react-native-mqtt
 
-A react-native HOC for for mqtt using react-native-paho-mqtt
+A react-native **Higher Order Component** for exchanging realtime mqtt messages as props. 
 
-## Getting Started
+## Installation
 
-#### Installation
+`npm install @eyezon/react-native-mqtt`
+
+OR
 
 `yarn add @eyezon/react-native-mqtt`
 
-It adds _react-native-paho-mqtt_ as its dependencies.
+## Getting Started
 
-Some component that you want to recieve message from mqtt as props
-```jsx
-// Temparature.js
-import React, { PureComponent } from 'react'
-import { connectMqttStore } from 'react-native-mqtt'
+```
+import { MqttClient } from '@eyezon/react-native-mqtt'
 
-class Temparature extends PureComponent {
-    render () {
-        return (
-            <div className="tempView">
-                {this.props.temp} °C
-            </div>
-        )
+const secureUri = 'wss://iot.eclipse.org:443/ws';
+// const username = 'optional_user'; 
+// const password = 'optional_pass';
+
+const clientId = Math.floor(Math.random() * 1000) + '';
+
+MqttClient.connect({ 
+    secureUri, 
+    // username, 
+    // password, 
+    clientId },()=>{
+  console.log('Woo! Mqtt connected!!')
+});
+```
+
+## Using the Higher Order Component
+```
+import React, { Component } from 'react';
+import { connectMqttStore } from '@eyezon/react-native-mqtt';
+
+class YourCoolComponent extends Component {
+    // coming back to this later
+}
+
+let mqttStores = [
+  {
+    storeName: "MyRealtimeStore",
+    defaultTopic: "/eyezon/looks/cool",
+    select: (data)=>{ commentCount: data.commentCount }
+  },
+  {
+      ... multiple stores
+  }
+];
+
+export default connectMqttStore(
+  YourCoolComponent,
+  mqttStores
+)
+
+```
+The select property is optional and expects a redux like mapStateToProps function. In the above example, the commentCount can be accessed by `this.props.MyRealtimeStore.commentCount`
+
+defaultTopic is also optional. Use this if you expect your component will always be subscribed to this topic.
+
+*P.S:* It tries to parse the incoming message to JSON and pass the JSON to both props & `select` function.
+
+```
+
+class YourCoolComponent extends Component {
+    constructor(props){
+        super(props)
+        this.intervalId = null
+    }
+    componentDidMount(){
+        this.props.addTopicToStore('/eyezon/looks/cool')
+
+        this.intervalId = setInterval(()=>{
+            this.props.send('/eyezon/looks/cool',{commentCount: Math.random()})
+        },2000)
+    }
+
+    componentWillUnmount(){
+        this.props.removeTopicFromStore('/eyezon/looks/cool')
+        this.intervalId && clearInterval(this.intervalId)
+    }
+
+    render(){
+        return <View> 
+            <Text>{this.props.MyRealtimeStore.commentCount}</Text>
+        </View>
     }
 }
 
-export default connectMqttStore(Temparature, [{
-    storeName: 'temp',
-    defaultTopic: 'path/to/topic/'
-}])
-
-// In some file connect to mqtt
-
-MqttEssential.connect({
-    uri: 'ws://mqtturl.com/',
-    username: 'usernameformqtt',
-    password: 'passwordforuser'
-}, () => {
-    //OnConnectCallback
-})
 ```
-
-`connectMqttStore` takes A Component and and array of objects, which desceibes the mqtt path and the prop name of that data. The objects may also contains a selector, simmilar to react-redux's.
-If you specify a selector in key **`selectData`** it will be called with mqtt's JSON.parsed messege or string of JSON.parsed fails.
-Wrapped component will get the return object/value from `selectdata` as props.
-A identity function is used if `selectData` is not provided.
-
 ## API
+- **HOC API**
+_Passed as props to the wrapped component_
 
-_TODO_
+1. `addTopicToStore(storeName,topicString [,qos])`
+2. `removeTopicFromStore(storeName,topicString)`
+3. `removeAllTopicsFromStore(storeName)`
+4. `send(topicString[,qos,retainFlag])`
+
+- **RAW API**
+
+1. `MqttClient.subscribe(topicString,[,qos])`
+2. `MqttClient.unsubscribe(topicString)`
+3. `MqttClient.sendMessage(topicString,messageJson[,qos,retainFlag])`
+4. `MqttClient.connect(conf,afterConnectCallback)`
+5. `MqttClient.disconnect(afterDisconnectCallback)`
 
 ## Contribution
 

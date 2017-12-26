@@ -1,12 +1,9 @@
 {
   "name": "@eyezon/react-native-mqtt",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "React-Native Higher Order Component store for real-time mqtt messages",
   "main": "src/index.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Eyezon/react-native-mqtt"
-  },
+  "repository": "git@codelab.eyezon.in:experimental/react-mqtt.git",
   "author": "Tamal Sen <tml.cse@gmail.com>",
   "contributors": [
     {
@@ -20,7 +17,8 @@
   },
   "dependencies": {
     "prop-types": "^15.5.10",
-    "react-native-paho-mqtt": "^0.1.1"
+    "react-native-paho-mqtt": "^0.1.1",
+    "react_native_mqtt": "^1.1.9"
   },
   "devDependencies": {
     "babel-jest": "21.0.2",
@@ -31,10 +29,10 @@
     "jest": "21.0.2",
     "jest-serializer-enzyme": "^1.0.0",
     "react": "15.4.1",
-    "react-native": "0.42.0",
-    "react-dom": "^15.5.4",
-    "react-test-renderer": "^15.5.4",
     "react-addons-test-utils": "^15.6.0",
+    "react-dom": "^15.5.4",
+    "react-native": "0.42.0",
+    "react-test-renderer": "^15.5.4",
     "websocket": "^1.0.24"
   },
   "jest": {

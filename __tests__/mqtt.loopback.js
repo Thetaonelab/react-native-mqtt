@@ -1,12 +1,15 @@
 import { MqttClient } from '../src/index'
 import { w3cwebsocket as webSocket } from 'websocket';
 
+jest.unmock('react-native-paho-mqtt')
+
 jest.setTimeout(20000);
-window = global
 
 beforeAll((done) => {
     MqttClient.connect({
-        uri: 'wss://test.mosquitto.org:8081/',
+        uri: 'wss://lbs.eyezon.in:9901/',
+        username: 'mqttlibtest',
+        password: 'testdeviceisonlyfortesting123',
         webSocket
     }, () => {
         console.log('MQTT Connected!')
@@ -14,9 +17,7 @@ beforeAll((done) => {
     })
 })
 afterAll((done) => {
-    MqttClient.disconnect(() => {
-        done()
-    })
+    MqttClient.disconnect(() => done())
 })
 
 test('Mqtt loopback', done => {

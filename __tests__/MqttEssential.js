@@ -1,10 +1,12 @@
-/* eslint-env jest */
-import * as RNPaho from 'react-native-paho-mqtt'
+
+// import * as RNPaho from 'react-native-paho-mqtt'
 // import chalk from 'chalk'
 import React from 'react'
 import { shallow } from 'enzyme'
+import { w3cwebsocket as webSocket } from 'websocket';
 
-jest.mock('react-native-paho-mqtt')
+
+// jest.mock('react-native-paho-mqtt')
 
 jest.setTimeout(30000)
 
@@ -35,7 +37,7 @@ class MockedView extends React.Component {
 const connectMqttStore = require('../src/MqttStoreConnect').default
 const MqttEssential = require('../src/MqttEssential').default
 
-describe('connectMqttStore', () => {
+describe.skip('connectMqttStore', () => {
   const mqttConnectOptions = {
     uri: 'wss://mymqtt.url',
     username: 'user1',
@@ -248,7 +250,7 @@ describe('connectMqttStore', () => {
     })
   })
 
-  it('subscribes only once if same topic is added twice', () => {
+  it.skip('subscribes only once if same topic is added twice', () => {
     const viewInstanceProps = wrapper.props()
     const topic = 'this/topic/willbe/added/twice'
     return new Promise((resolve, reject) => {
@@ -265,11 +267,12 @@ describe('connectMqttStore', () => {
   })
 })
 
-describe('connectMqttStore selector', () => {
+describe.skip('connectMqttStore selector', () => {
   const mqttConnectOptions = {
-    uri: 'wss://mymqtt.url',
-    username: 'user1',
-    password: 'pass1'
+    uri: 'wss://lbs.eyezon.in:9901/',
+    username: 'mqttlibtest',
+    password: 'testdeviceisonlyfortesting123',
+    webSocket
   }
   const defaultTopic = '/path/to/default/topic'
   const store = 'message'

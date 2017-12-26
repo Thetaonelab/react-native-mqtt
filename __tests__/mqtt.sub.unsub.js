@@ -1,66 +1,52 @@
 import { MqttClient } from '../src/index'
 import { w3cwebsocket as webSocket } from 'websocket';
 
-
-window = global
-
+jest.unmock('react_native_mqtt')
+jest.setTimeout(60000)
 
 describe('Mqtt sub-unsub-pub', () => {
     beforeEach((done) => {
+        console.log('MqttClient.connect **')
         MqttClient.connect({
-            uri: 'wss://test.mosquitto.org:8081/',
+            uri: 'wss://lbs.eyezon.in:9901/',
+            username: 'mqttlibtest',
+            password: 'testdeviceisonlyfortesting123',
             webSocket
         }, () => {
             console.log('MQTT Connected!')
-            done()
+            setTimeout(done, 100)
         })
     })
     afterEach((done) => {
         MqttClient.disconnect(() => {
-            done()
+            setImmediate(done)
         })
     })
 
-    test('Mqtt subscribe before connect', done => {
+    test('Mqtt subscribe before connect', (done) => {
         var msg = { a: "b" }
         MqttClient.subscribe('Test', '/react-native/test', (topic, data) => {
-            console.log({ data })
-            expect(data).toEqual(msg);
+            expect(data).toEqual(msg)
             done()
         })
         MqttClient.publish('Test', '/react-native/test', msg)
-
-
-        MqttClient.connect({
-            uri: 'wss://test.mosquitto.org:8081/',
-            webSocket: webSocket,
-            ws: webSocket
-        }, () => {
-            console.log('MQTT Connected!')
-        })
     });
-})
 
-
-test('[ Negative ] Mqtt subscribe retain after disconnect', done => {
-    var msg = { a: "b" }
-    console.log('================================|| ')
-    MqttClient.connect({
-        uri: 'wss://test.mosquitto.org:8081/',
-        webSocket: webSocket
-    }, () => {
-        MqttClient.subscribe('Test', '/react-native/test', (topic, data) => {
+    test('[ Negative ] Mqtt subscribe retain after disconnect', done => {
+        var msg = { a: "b" }
+        MqttClient.subscribe('Test', '/react-native/test_1', (topic, data) => {
             expect(data).not.toEqual(msg);
             done()
         })
-
-        MqttClient.disconnect(() => {
-            MqttClient.publish('Test', '/react-native/test', msg)
-
-            /// PASS THE TEST CASE
-            setTimeout(function () {
-                done()
-            }, 2000);
-        })
+        setTimeout(
+            MqttClient.disconnect,
+            1000,
+            () => {
+                MqttClient.publish('Test', '/react-native/test_1', msg)
+                setTimeout(done, 2200)
+            }
+        )
     })
 })
+
+// Mqtt close websocket test

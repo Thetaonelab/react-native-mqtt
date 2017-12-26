@@ -45,8 +45,8 @@ export default function connectMqttStore(WrappedComponent, stores) {
       if (this._storeTopic[store].indexOf(topic) === -1) {
         this._storeTopic[store].push(topic)
       } else {
-      // TODO: need review, can unsubscribe be gaurded?
-      // return
+        // TODO: need review, can unsubscribe be gaurded?
+        // return
       }
       this.unsubscribe(this.componentId, topic)
 

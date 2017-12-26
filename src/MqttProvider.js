@@ -1,16 +1,16 @@
-import { Component} from 'react'
+import { Component } from 'react'
 import PropTypes from 'prop-types'
 
 class MqttProvider extends Component {
-//   constructor (props) {
-//       super(props)
-//     }
+  //   constructor (props) {
+  //       super(props)
+  //     }
 
-  getChildContext () {
+  getChildContext() {
     return { lbsConnect: this.props.lbsConnect }
   }
 
-  render () {
+  render() {
     return this.props.children
   }
 }

@@ -1,8 +1,12 @@
-import { Message, Client } from 'react-native-paho-mqtt'
+// import init from 'react_native_mqtt';
+// import { Message, Client } from 'react-native-paho-mqtt'
+// import { AsyncStorage } from 'react-native'
 
 var pubsubQueue = []
+var clientIdSuff = Math.random().toString(16).substr(2, 18) + ''
+var DEFAULT_COMPONENT_ID = '12fd3-jhdg4-jhdys-hdk42'
 
-function enqueue (obj) {
+function enqueue(obj) {
   pubsubQueue.push(obj)
 }
 
@@ -65,43 +69,44 @@ const myStorage = {
   }
 }
 
+let init = null
 var subscribedTopicCallback = {}
-var mqttClient
+var mqttClient = null
 var saveConf
-
 
 function connect(conf, afterConnect) {
 
-  console.log('TRYING TO CONNECT TO MQTT! (1)', mqttClient ? mqttClient._client.connected : null)
-  if (mqttClient && mqttClient._client.connected) {
+  if (conf.webSocket) {
+    global.WebSocket = conf.webSocket
+  }
+  window = global // react_native_mqtt assigns Paho Object to window
+
+  if (init === null) {
+    init = require('react_native_mqtt').default
+    init({})
+  }
+
+
+  console.log('TRYING TO CONNECT TO MQTT! (1)', mqttClient ? mqttClient.isConnected() : null)
+  if (mqttClient && mqttClient.isConnected()) {
     console.log('MQTT ALREADY CONNECTED!')
     return
   }
 
   saveConf = conf
 
-  if (!mqttClient)
-    mqttClient = new Client({
-      uri: conf.uri,
-      clientId: conf.username + '-' + Math.random().toString(16).substr(2, 18),
-      storage: conf.storage || myStorage,
-      webSocket: conf.webSocket
-    })
+  if (!mqttClient) {
+    mqttClient = new Paho.MQTT.Client(conf.uri, conf.clientId || conf.username + '-' + clientIdSuff, );
+  }
 
-  console.log('TRYING TO CONNECT TO MQTT! (2)', mqttClient._client.connected)
-  mqttClient.connect({ userName: conf.username, password: conf.password })
-    .then(() => {
-      if (afterConnect) {
-        afterConnect()
-      }
-    })
-    .catch(console.error)
+  console.log('TRYING TO CONNECT TO MQTT! (2)', mqttClient.isConnected())
 
+  const onMessageArrived = (msg) => {
+    // console.log('Message received!',msg)
+    // console.log(subscribedTopicCallback)
 
-  //// MESSAGE RECEIVER HANDLER
-  mqttClient.on('messageReceived', function (msg) {
-    let topic = msg._destinationName
-    let message = msg.payloadString
+    let topic = msg._getDestinationName()
+    let message = msg._getPayloadString()
     if (!subscribedTopicCallback[topic]) {
       var wildCardTopic = ''
       var tempTopic = topic
@@ -125,6 +130,7 @@ function connect(conf, afterConnect) {
       if (topic) {
         Object.keys(subscribedTopicCallback[topic]).forEach(function (key) {
           subscribedTopicCallback[topic][key](topic, message)
+          console.log('Callback called (1)')
         })
       } else {
       }
@@ -136,23 +142,30 @@ function connect(conf, afterConnect) {
         } catch (ex) { }
 
         subscribedTopicCallback[topic][key](topic, message)
+        console.log('Callback called (2)')
       })
     }
-  })
-  //// MESSAGE RECEIVER HANDLER END
+  }
 
-  //// CLIENT ERROR HANDLER
-  mqttClient.on('connectionLost', (err) => {
-    if (err.errorCode) { // Only when unexpected connection lost happens
-      console.log(mqttClient._client.connected, 'connectionLost', err)
-      connect(saveConf)
+  const onConnectionLost = (err) => {
+    if (err.errorCode) {
+      console.log(mqttClient.isConnected(), 'connectionLost', err)
     }
-  })
+  }
 
-
+  mqttClient.onConnectionLost = onConnectionLost;
+  mqttClient.onMessageArrived = onMessageArrived;
+  mqttClient.connect({
+    onSuccess: afterConnect,
+    useSSL: true,
+    userName: conf.username,
+    password: conf.password,
+    cleanSession: false,
+    reconnect: true
+  });
 }
 
-function subscribe(componentId, topic, callback) {
+function subscribe(componentId, topic, callback, qos) {
   enqueue({
     type: 'SUB',
     componentId,
@@ -161,24 +174,37 @@ function subscribe(componentId, topic, callback) {
   })
 }
 
-function sub(componentId, topic, callback) {
-  if (!mqttClient || !mqttClient._client.connected) {
-    console.warn('mqtt client not ready!')
+function sub(componentId, topic, callback, qos) {
+  if (mqttClient === null) {
+    return
+  }
+  if (!mqttClient.isConnected()) {
     throw Error('mqtt client not ready!')
+  }
+
+  //to support calling without component id
+  if (typeof topic === 'function') {
+    componentId = DEFAULT_COMPONENT_ID
+    topic = componentId
+    callback = topic
+    qos = callback
   }
 
   callback.id = componentId
   subscribedTopicCallback[topic] = subscribedTopicCallback[topic] ? subscribedTopicCallback[topic] : {}
   subscribedTopicCallback[topic][componentId] = callback
 
-  return mqttClient.subscribe(topic)
-    .then(() => {
-      // console.log('Subscribed to ', topic)
-      return true
-    })
-    .catch(er => {
-      throw er
-    })
+  return new Promise((resolve, reject) =>
+    mqttClient.subscribe(topic,
+      {
+        onSuccess: () => {
+          resolve()
+        }, onFailure: () => {
+          reject()
+        },
+        qos: qos || 0
+      })
+  )
 }
 
 function unsubscribe(componentId, topic) {
@@ -188,25 +214,40 @@ function unsubscribe(componentId, topic) {
     topic
   })
 }
+
 function unsub(componentId, topic) {
-  if (!mqttClient || !mqttClient._client.connected) {
+  if (mqttClient === null) {
+    return
+  }
+  if (!mqttClient.isConnected()) {
     console.warn('mqtt client not ready!')
-    throw Error('mqtt client not ready!')
+    // throw Error('mqtt client not ready!')
+  }
+
+  //to support calling without component id
+  var args = Array.from(arguments)
+  if (args.length == 1) {
+    componentId = DEFAULT_COMPONENT_ID
+    topic = componentId
   }
 
   if (!subscribedTopicCallback[topic]) { return true }
 
   delete subscribedTopicCallback[topic][componentId]
+
   if (Object.keys(subscribedTopicCallback[topic]).length === 0) {
-    return mqttClient.unsubscribe(topic)
-      .then(() => {
-        delete subscribedTopicCallback[topic]
-        console.log('Unsubscribed', topic)
-        return true
-      })
-      .catch(er => {
-        throw er
-      })
+
+    return new Promise((resolve, reject) =>
+      mqttClient.unsubscribe(topic,
+        {
+          onSuccess: () => {
+            resolve()
+          }, onFailure: () => {
+            reject()
+          }
+        }
+      ))
+
   }
 }
 
@@ -222,25 +263,40 @@ function publish(componentId, topic, message, qos, retained) {
 }
 
 function pub(componentId, topic, message, qos, retained) {
-  if (!mqttClient || !mqttClient._client.connected) {
+  if (mqttClient === null) {
+    return
+  }
+  if (!mqttClient.isConnected()) {
     console.warn('mqtt client not ready!')
     return
+  }
+
+  //to support calling without component id
+  if (typeof componentId === 'string'
+    && (typeof topic === 'string' || typeof message === 'object')
+    && (!message || typeof message === 'number')
+  ) {
+    componentId = DEFAULT_COMPONENT_ID
+    topic = componentId
+    message = topic
+    qos = message
+    retained = qos
   }
 
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
 
-  const msg = new Message(message)
+  const msg = new Paho.MQTT.Message(message)
   msg.destinationName = topic
   msg.qos = qos || 0
   msg.retained = retained ? true : false
   mqttClient.send(msg)
 }
 
-
 function disconnect(afterDisconnect) {
-  if (!mqttClient || !mqttClient._client.connected) {
+  if (!mqttClient || !mqttClient.isConnected()) {
+    afterDisconnect(Error('Not connected'))
     console.error('Not connected')
     return
   }
@@ -255,13 +311,8 @@ function disconnect(afterDisconnect) {
   }, []))
     .then(ar => {
       mqttClient.disconnect()
-        .then(() => {
-          if (afterDisconnect) {
-            afterDisconnect()
-          }
-          console.log('MQTT Disconnected!')
-        })
-        .catch(console.log)
+      setTimeout(afterDisconnect, 300)
+      // mqttClient = null // Dont reuse Paho.Client Instance
     })
 }
 
