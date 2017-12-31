@@ -1,5 +1,7 @@
 # react-native-mqtt
 
+<img src="logo.png" width="150px" alt="logo">
+
 A react-native **Higher Order Component** for exchanging realtime mqtt messages as props. 
 
 ## Installation
