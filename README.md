@@ -21,7 +21,7 @@ const secureUri = 'wss://iot.eclipse.org:443/ws';
 // const username = 'optional_user'; 
 // const password = 'optional_pass';
 
-const clientId = Math.floor(Math.random() * 1000) + '';
+const clientId = Math.floor(Math.random() * 1000) + '';  // protocol_name is  name need to connect to the mqtt server
 
 MqttClient.connect({ 
     secureUri, 
@@ -43,7 +43,7 @@ class YourCoolComponent extends Component {
 
 let mqttStores = [
   {
-    storeName: "MyRealtimeStore",
+    storeName: "MyRealtimeStore", // components will receive the storeName as the prop which contains all the data sent by the mqtt server
     defaultTopic: "/eyezon/looks/cool",
     select: (data)=>{ commentCount: data.commentCount }
   },
@@ -72,7 +72,7 @@ class YourCoolComponent extends Component {
         this.intervalId = null
     }
     componentDidMount(){
-        this.props.addTopicToStore('/eyezon/looks/cool')
+        this.props.addTopicToStore('/eyezon/looks/cool') // automatically removes the added store as the component unmounts
 
         this.intervalId = setInterval(()=>{
             this.props.send('/eyezon/looks/cool',{commentCount: Math.random()})
